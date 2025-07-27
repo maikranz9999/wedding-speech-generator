@@ -103,6 +103,16 @@ const WeddingSpeechGenerator = () => {
   const API_BASE_URL = 'https://api.anthropic.com/v1/messages';
 
   const extractDataFromNotes = async () => {
+    // 🔍 DEBUG AUSGABEN - Temporär zum Problem identifizieren
+    console.log('🔍 === API DEBUG START ===');
+    console.log('🔑 API Key exists:', !!ANTHROPIC_API_KEY);
+    console.log('🔑 API Key length:', ANTHROPIC_API_KEY?.length || 'undefined');
+    console.log('🔑 API Key starts with sk-ant:', ANTHROPIC_API_KEY?.startsWith('sk-ant'));
+    console.log('🔑 First 10 chars:', ANTHROPIC_API_KEY?.substring(0, 10) || 'undefined');
+    console.log('🌐 API Base URL:', API_BASE_URL);
+    console.log('📝 Notes length:', rawNotes.length);
+    console.log('🔍 === API DEBUG END ===');
+    
     if (!rawNotes.trim()) {
       alert('Bitte geben Sie Ihre Notizen ein.');
       return;
@@ -159,9 +169,13 @@ Text: ${rawNotes}
 
 Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
 
+      // 🔍 DEBUG: API Key Check
       if (!ANTHROPIC_API_KEY) {
+        console.error('❌ API-Key ist undefined oder leer');
         throw new Error('API-Key nicht konfiguriert. Bitte Environment Variable NEXT_PUBLIC_ANTHROPIC_API_KEY in Vercel setzen.');
       }
+
+      console.log('🚀 Starte API-Call zu Anthropic...');
 
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
@@ -182,20 +196,29 @@ Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
         })
       });
 
+      console.log('📡 API Response Status:', response.status);
+      console.log('📡 API Response OK:', response.ok);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ API Error Response:', errorData);
         throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
+      console.log('✅ API Response Data:', data);
+      
       const aiResponse = data.content[0].text;
+      console.log('🤖 AI Response Text:', aiResponse);
       
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
+        console.error('❌ Keine gültige JSON in AI Response gefunden');
         throw new Error('Keine gültige JSON-Antwort von der KI erhalten');
       }
 
       const extractedData = JSON.parse(jsonMatch[0]);
+      console.log('✅ Extrahierte Daten:', extractedData);
       
       setFormData(prev => ({
         ...prev,
@@ -207,7 +230,10 @@ Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
       alert('✅ Echte KI-Extraktion erfolgreich! Alle Felder wurden intelligent befüllt.');
       
     } catch (error) {
-      console.error('Fehler bei der echten KI-Extraktion:', error);
+      console.error('❌ Fehler bei der echten KI-Extraktion:', error);
+      console.error('❌ Error Name:', error.name);
+      console.error('❌ Error Message:', error.message);
+      console.error('❌ Error Stack:', error.stack);
       
       if (error.message.includes('API Error: 401')) {
         alert('❌ API-Key ungültig. Bitte überprüfen Sie Ihren Anthropic API-Key in den Vercel Environment Variables.');
@@ -215,11 +241,13 @@ Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
         alert('❌ Rate Limit erreicht. Bitte warten Sie einen Moment.');
       } else if (error.message.includes('API-Key nicht konfiguriert')) {
         alert('❌ API-Key nicht gefunden. Bitte setzen Sie NEXT_PUBLIC_ANTHROPIC_API_KEY in Vercel Environment Variables.');
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        alert('❌ Netzwerk-Fehler. Überprüfen Sie Ihre Internetverbindung.');
       } else {
         alert(`❌ KI-Extraktion fehlgeschlagen: ${error.message}`);
       }
       
-      console.log('Fallback zu lokaler Simulation...');
+      console.log('⚠️ Fallback zu lokaler Simulation...');
       const extractedData = simulateAIExtraction(rawNotes);
       setFormData(prev => ({ ...prev, ...extractedData }));
       setExtractionCompleted(true);
@@ -231,20 +259,20 @@ Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
 
   const simulateAIExtraction = (notes) => {
     return {
-      person1Name: "Sarah",
+      person1Name: "Emma",
       person1Gender: "weiblich", 
-      person2Name: "Alexander",
+      person2Name: "David",
       person2Gender: "männlich",
       weddingDate: "2024-09-14",
-      weddingLocation: "Schloss Bensberg",
-      officiantName: "Maria Hochzeit",
-      howMet: "Über Dating-App kennengelernt, beide waren Dating-müde",
-      firstMeeting: "Café in Kölner Altstadt, Alexander verschüttete Kaffee",
-      funnyStories: "Alexander 10 Min zu spät, dreimal umgezogen, Kaffee verschüttet",
-      proposalStory: "Eigener Garten unter dem Apfelbaum, es regnete",
-      biggestCrisis: "Pandemie 2022 war schwierig, als Sarah Job verlor",
-      goals: "Haus mit großem Garten kaufen, Japan-Reise",
-      specialWishes: `Demo-Extraktion basierend auf Notizen: ${notes.substring(0, 100)}...`
+      weddingLocation: "Alte Mühle in Bergheim am See",
+      officiantName: "Petra Müller",
+      howMet: "Fitnessstudio Oktober 2020, David hat Emma beim Bankdrücken geholfen",
+      firstMeeting: "David ist 3 Wochen jeden Tag zur gleichen Zeit ins Gym gegangen",
+      funnyStories: "David dachte Emma ist Personal Trainerin, beide trugen gleiche Nike Schuhe",
+      proposalStory: "Zu Hause im Wohnzimmer, 23. Dezember 2023, Benny hatte auch Schleife um Hals",
+      biggestCrisis: "Davids depressive Phase 2021, Emma ist geblieben und hat Therapie organisiert",
+      goals: "Haus mit Garten für Benny, Kinder in 2-3 Jahren, Weltreise zum 10. Hochzeitstag",
+      specialWishes: `Demo-Extraktion basierend auf echten Notizen: ${notes.substring(0, 100)}...`
     };
   };
 
@@ -328,9 +356,15 @@ ANFORDERUNGEN:
 
 Erstelle jetzt eine komplett neue, bewegende Traurede:`;
 
+      // 🔍 DEBUG für Rede-Generierung
+      console.log('🎤 === REDE GENERIERUNG DEBUG START ===');
+      console.log('🔑 API Key exists:', !!ANTHROPIC_API_KEY);
+
       if (!ANTHROPIC_API_KEY) {
         throw new Error('API-Key nicht konfiguriert. Bitte Environment Variable NEXT_PUBLIC_ANTHROPIC_API_KEY in Vercel setzen.');
       }
+
+      console.log('🚀 Starte Rede-Generierung API-Call...');
 
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
@@ -351,19 +385,24 @@ Erstelle jetzt eine komplett neue, bewegende Traurede:`;
         })
       });
 
+      console.log('📡 Rede API Response Status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Rede API Error:', errorData);
         throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
       const aiGeneratedSpeech = data.content[0].text;
       
+      console.log('✅ Rede erfolgreich generiert, Länge:', aiGeneratedSpeech.length);
+      
       setGeneratedSpeech(aiGeneratedSpeech);
       setShowSpeech(true);
       
     } catch (error) {
-      console.error('Fehler bei der echten KI-Rede-Generierung:', error);
+      console.error('❌ Fehler bei der echten KI-Rede-Generierung:', error);
       
       if (error.message.includes('API Error: 401')) {
         alert('❌ API-Key ungültig. Bitte überprüfen Sie Ihren Anthropic API-Key.');
@@ -375,7 +414,7 @@ Erstelle jetzt eine komplett neue, bewegende Traurede:`;
         alert(`❌ Rede-Generierung fehlgeschlagen: ${error.message}`);
       }
       
-      console.log('Fallback zu Demo-Rede...');
+      console.log('⚠️ Fallback zu Demo-Rede...');
       const fallbackSpeech = `# Traurede für ${formData.person1Name} & ${formData.person2Name}
 
 *${new Date(formData.weddingDate || '2024-09-14').toLocaleDateString('de-DE')} • ${formData.weddingLocation}*
@@ -446,11 +485,10 @@ Sie dürfen sich küssen!
                 placeholder="Geben Sie hier Ihre Notizen ein:
 
 Beispiel:
-Sarah und Alexander heiraten am 14.09.2024 in Schloss Bensberg.
-Sie haben sich über eine Dating-App kennengelernt.
-Erstes Date war in einem Café in der Kölner Altstadt.
-Alexander verschüttete Kaffee über sein weißes Hemd.
-Der Antrag fand im eigenen Garten unter dem Apfelbaum statt..."
+Emma und David heiraten am 14.09.2024 in der Alten Mühle.
+Sie haben sich im Fitnessstudio kennengelernt.
+David hat Emma beim Bankdrücken geholfen.
+Der Antrag war zu Hause im Wohnzimmer..."
                 style={{ 
                   backgroundColor: 'white',
                   color: '#5C493E'
@@ -521,7 +559,7 @@ Der Antrag fand im eigenen Garten unter dem Apfelbaum statt..."
                   className="w-full p-3 rounded-lg border"
                   value={formData.person1Name}
                   onChange={(e) => updateFormData('person1Name', e.target.value)}
-                  placeholder="Sarah"
+                  placeholder="Emma"
                 />
               </div>
               
@@ -552,7 +590,7 @@ Der Antrag fand im eigenen Garten unter dem Apfelbaum statt..."
                   className="w-full p-3 border rounded-lg"
                   value={formData.person2Name}
                   onChange={(e) => updateFormData('person2Name', e.target.value)}
-                  placeholder="Alexander"
+                  placeholder="David"
                 />
               </div>
               
@@ -596,7 +634,7 @@ Der Antrag fand im eigenen Garten unter dem Apfelbaum statt..."
                   className="w-full p-3 border rounded-lg"
                   value={formData.weddingLocation}
                   onChange={(e) => updateFormData('weddingLocation', e.target.value)}
-                  placeholder="Schloss Bensberg"
+                  placeholder="Alte Mühle in Bergheim am See"
                 />
               </div>
             </div>
@@ -611,7 +649,7 @@ Der Antrag fand im eigenen Garten unter dem Apfelbaum statt..."
                 className="w-full p-3 border rounded-lg"
                 value={formData.officiantName}
                 onChange={(e) => updateFormData('officiantName', e.target.value)}
-                placeholder="Maria Hochzeit"
+                placeholder="Petra Müller"
               />
             </div>
           </div>
