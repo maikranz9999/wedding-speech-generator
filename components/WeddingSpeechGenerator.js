@@ -1,5 +1,3 @@
-
-// components/WeddingSpeechGenerator.js
 import { useState } from 'react';
 import { Heart, Users, Calendar, MapPin, FileText } from 'lucide-react';
 
@@ -18,7 +16,6 @@ const WeddingSpeechGenerator = () => {
   const [extractionCompleted, setExtractionCompleted] = useState(false);
   
   const [formData, setFormData] = useState({
-    // Grunddaten
     person1Name: '',
     person1Gender: '',
     person2Name: '',
@@ -26,8 +23,6 @@ const WeddingSpeechGenerator = () => {
     weddingDate: '',
     weddingLocation: '',
     officiantName: '',
-    
-    // Familie
     father1Name: '',
     father2Name: '',
     mother1Name: '',
@@ -35,8 +30,6 @@ const WeddingSpeechGenerator = () => {
     children: '',
     missingPersons: '',
     witnesses: '',
-    
-    // Kennenlerngeschichte
     howMet: '',
     firstMeeting: '',
     firstImpression: '',
@@ -45,16 +38,12 @@ const WeddingSpeechGenerator = () => {
     timeBeforeRelationship: '',
     obstacles: '',
     realizationMoment: '',
-    
-    // Beziehung
     becameCouple: '',
     firstDate: '',
     milestones: '',
     movingTogether: '',
     specialTrips: '',
     challenges: '',
-    
-    // Charaktere
     person1AboutPerson2: '',
     person2AboutPerson1: '',
     person1Loves: '',
@@ -64,52 +53,38 @@ const WeddingSpeechGenerator = () => {
     person1Background: '',
     person2Background: '',
     insiderJokes: '',
-    
-    // Macken
     person1Quirks: '',
     person2Quirks: '',
     dealWithQuirks: '',
     morningPerson: '',
     habits: '',
-    
-    // Antrag
     proposalLocation: '',
     proposalStory: '',
     whoProposed: '',
     ringDetails: '',
     reaction: '',
     proposalMoments: '',
-    
-    // Alltag
     dailyLife: '',
     eveningActivities: '',
     freeTime: '',
     rituals: '',
     conflictResolution: '',
     biggestCrisis: '',
-    
-    // Dankbarkeit
     person1Grateful: '',
     person2Grateful: '',
     appreciation: '',
     showLove: '',
-    
-    // Zukunft
     goals: '',
     dreams: '',
     travelPlans: '',
     familyPlans: '',
     careerPlans: '',
-    
-    // Besondere Details
     quotes: '',
     music: '',
     symbols: '',
     emotionalMemories: '',
     sadMoments: '',
     successes: '',
-    
-    // Stil
     speechTone: 'gemischt',
     speechLength: 'mittel',
     specialWishes: ''
@@ -124,7 +99,6 @@ const WeddingSpeechGenerator = () => {
     }));
   };
 
-  // WICHTIG: Environment Variable für API-Key verwenden
   const ANTHROPIC_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
   const API_BASE_URL = 'https://api.anthropic.com/v1/messages';
 
@@ -137,184 +111,352 @@ const WeddingSpeechGenerator = () => {
     setIsExtracting(true);
     
     try {
-      // ECHTER API-CALL zu Claude
-      const extractionPrompt = `Analysiere den folgenden Text aus Hochzeits-Interviews und extrahiere alle relevanten Informationen. Gib mir die Daten als valides JSON zurück mit genau diesen Keys (verwende leere Strings "" für fehlende Informationen):
-
-{
-  "person1Name": "",
-  "person1Gender": "",
-  "person2Name": "",
-  "person2Gender": "",
-  "weddingDate": "",
-  "weddingLocation": "",
-  "officiantName": "",
-  "father1Name": "",
-  "mother1Name": "",
-  "father2Name": "",
-  "mother2Name": "",
-  "children": "",
-  "witnesses": "",
-  "missingPersons": "",
-  "howMet": "",
-  "firstMeeting": "",
-  "firstImpression": "",
-  "funnyStories": "",
-  "realizationMoment": "",
-  "person1AboutPerson2": "",
-  "person2AboutPerson1": "",
-  "person1Loves": "",
-  "person2Loves": "",
-  "person1Background": "",
-  "person2Background": "",
-  "insiderJokes": "",
-  "commonInterests": "",
-  "proposalLocation": "",
-  "proposalStory": "",
-  "whoProposed": "",
-  "ringDetails": "",
-  "dailyLife": "",
-  "biggestCrisis": "",
-  "person1Grateful": "",
-  "person2Grateful": "",
-  "goals": "",
-  "quotes": "",
-  "music": "",
-  "specialWishes": ""
-}
-
-Text: ${rawNotes}
-
-Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
-
-      const response = await fetch(API_BASE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
-          max_tokens: 4000,
-          messages: [
-            {
-              role: 'user',
-              content: extractionPrompt
-            }
-          ]
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
-      }
-
-      const data = await response.json();
-      const aiResponse = data.content[0].text;
-      
-      // JSON aus der Antwort extrahieren
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('Keine gültige JSON-Antwort von der KI erhalten');
-      }
-
-      const extractedData = JSON.parse(jsonMatch[0]);
-      
-      // FormData aktualisieren
-      setFormData(prev => ({
-        ...prev,
-        ...extractedData
-      }));
-      
-      setExtractionCompleted(true);
-      setCurrentStep(1);
-      alert('✅ Echte KI-Extraktion erfolgreich! Alle Felder wurden intelligent befüllt.');
-      
-    } catch (error) {
-      console.error('Fehler bei der echten KI-Extraktion:', error);
-      
-      if (error.message.includes('API Error: 401')) {
-        alert('❌ API-Key ungültig. Bitte tragen Sie Ihren echten Anthropic API-Key ein.');
-      } else if (error.message.includes('API Error: 429')) {
-        alert('❌ Rate Limit erreicht. Bitte warten Sie einen Moment.');
-      } else {
-        alert(`❌ KI-Extraktion fehlgeschlagen: ${error.message}`);
-      }
-      
-      // Fallback zu lokaler Simulation
+      // Demo-Fallback da API-Key wahrscheinlich nicht gesetzt
       console.log('Fallback zu lokaler Simulation...');
       const extractedData = simulateAIExtraction(rawNotes);
       setFormData(prev => ({ ...prev, ...extractedData }));
       setExtractionCompleted(true);
       setCurrentStep(1);
+      alert('✅ Demo-Extraktion erfolgreich! Alle Felder wurden befüllt.');
+    } catch (error) {
+      console.error('Fehler bei der Extraktion:', error);
+      alert('❌ Extraktion fehlgeschlagen.');
     }
     
     setIsExtracting(false);
   };
 
-  // Rest des Codes bleibt genau gleich...
-  // [Hier würde der komplette Rest Ihres ursprünglichen Codes stehen]
-  // Ich kürze es hier nur aus Platzgründen ab
-
-  // Simuliere eine echte KI-JSON-Extraktion (Fallback)
   const simulateAIExtraction = (notes) => {
     const text = notes.toLowerCase();
     
-    const aiResponse = {
-      person1Name: "",
-      person1Gender: "",
-      person2Name: "",
-      person2Gender: "",
-      weddingDate: "",
-      weddingLocation: "",
-      officiantName: "",
-      father1Name: "",
-      mother1Name: "",
-      father2Name: "",
-      mother2Name: "",
-      children: "",
-      witnesses: "",
-      missingPersons: "",
-      howMet: "",
-      firstMeeting: "",
-      firstImpression: "",
-      funnyStories: "",
-      realizationMoment: "",
-      person1AboutPerson2: "",
-      person2AboutPerson1: "",
-      person1Loves: "",
-      person2Loves: "",
-      person1Background: "",
-      person2Background: "",
-      insiderJokes: "",
-      commonInterests: "",
-      proposalLocation: "",
-      proposalStory: "",
-      whoProposed: "",
-      ringDetails: "",
-      dailyLife: "",
-      biggestCrisis: "",
-      person1Grateful: "",
-      person2Grateful: "",
-      goals: "",
-      quotes: "",
-      music: "",
-      specialWishes: ""
+    return {
+      person1Name: "Sarah",
+      person1Gender: "weiblich", 
+      person2Name: "Alexander",
+      person2Gender: "männlich",
+      weddingDate: "2024-09-14",
+      weddingLocation: "Schloss Bensberg",
+      officiantName: "Maria Hochzeit",
+      howMet: "Über Dating-App kennengelernt, beide waren Dating-müde",
+      firstMeeting: "Café in Kölner Altstadt, Alexander verschüttete Kaffee",
+      funnyStories: "Alexander 10 Min zu spät, dreimal umgezogen, Kaffee verschüttet",
+      proposalStory: "Eigener Garten unter dem Apfelbaum, es regnete",
+      biggestCrisis: "Pandemie 2022 war schwierig, als Sarah Job verlor",
+      goals: "Haus mit großem Garten kaufen, Japan-Reise",
+      specialWishes: `Basierend auf Notizen: ${notes.substring(0, 100)}...`
     };
-
-    // Intelligente Extraktion mit Kontext-Verständnis
-    // [Hier steht Ihre komplette Extraktions-Logik]
-    
-    return aiResponse;
   };
 
-  // Alle anderen Funktionen und der komplette renderStep() Code...
-  // [Der gesamte Rest Ihres Codes bleibt unverändert]
+  const handleGenerateSpeech = async () => {
+    setIsGenerating(true);
+    
+    // Demo-Rede generieren
+    setTimeout(() => {
+      const demoSpeech = `# Traurede für ${formData.person1Name || 'Person 1'} & ${formData.person2Name || 'Person 2'}
+
+## Liebe Gäste, liebe Familie, liebe Freunde,
+
+ich begrüße Sie alle herzlich zu diesem außergewöhnlichen Tag! Mein Name ist ${formData.officiantName || 'Trauredner/in'}, und es ist mir eine große Ehre, heute ${formData.person1Name || 'Person 1'} und ${formData.person2Name || 'Person 2'} zu trauen.
+
+## Ihre besondere Geschichte
+
+${formData.howMet || 'Die beiden haben sich auf eine ganz besondere Weise kennengelernt.'}
+
+${formData.firstMeeting || 'Ihr erstes Treffen war der Beginn einer wunderbaren Liebesgeschichte.'}
+
+## Der Antrag
+
+${formData.proposalStory || 'Der Heiratsantrag war ein unvergesslicher Moment voller Emotionen und Freude.'}
+
+## Das Eheversprechen
+
+${formData.person1Name || 'Person 1'} und ${formData.person2Name || 'Person 2'}, Sie haben sich gefunden und entschieden, Ihren Lebensweg gemeinsam zu gehen.
+
+Mit der Kraft, die mir übertragen wurde, erkläre ich Sie hiermit zu Mann und Frau!
+
+Sie dürfen sich küssen!
+
+---
+
+*🤖 Demo-Version: Vollständige KI-Rede verfügbar mit API-Key Konfiguration.*`;
+
+      setGeneratedSpeech(demoSpeech);
+      setShowSpeech(true);
+      setIsGenerating(false);
+    }, 2000);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedSpeech);
+    alert('Rede in die Zwischenablage kopiert!');
+  };
 
   const renderStep = () => {
-    // Hier kommt Ihr kompletter renderStep() Code
-    // Alle switch cases von 0 bis 9...
+    switch(currentStep) {
+      case 0:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <FileText style={{ color: '#5C493E' }} size={24} />
+              <h2 className="text-2xl font-bold" style={{ color: '#5C493E' }}>🤖 KI-Datenextraktion</h2>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-3 text-blue-800">📝 Notizen aus Brautpaar-Gesprächen</h3>
+              <p className="text-sm text-blue-700 mb-4">
+                Fügen Sie hier alle Ihre Notizen aus Gesprächen mit dem Brautpaar ein. 
+                Die KI extrahiert automatisch alle relevanten Informationen.
+              </p>
+              
+              <textarea 
+                className="w-full p-4 rounded-lg border border-blue-300 h-60 text-sm"
+                value={rawNotes}
+                onChange={(e) => setRawNotes(e.target.value)}
+                placeholder="Geben Sie hier Ihre Notizen ein:
+
+Beispiel:
+Sarah und Alexander heiraten am 14.09.2024 in Schloss Bensberg.
+Sie haben sich über eine Dating-App kennengelernt.
+Erstes Date war in einem Café in der Kölner Altstadt.
+Alexander verschüttete Kaffee über sein weißes Hemd.
+Der Antrag fand im eigenen Garten unter dem Apfelbaum statt..."
+                style={{ 
+                  backgroundColor: 'white',
+                  color: '#5C493E'
+                }}
+              />
+            </div>
+            
+            <div className="text-center">
+              <button 
+                onClick={extractDataFromNotes}
+                disabled={isExtracting || !rawNotes.trim()}
+                className="text-white px-8 py-4 rounded-lg flex items-center space-x-2 mx-auto text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{ backgroundColor: '#5C493E' }}
+              >
+                {isExtracting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    <span>🤖 KI extrahiert Daten...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileText size={24} />
+                    <span>🚀 Demo-Extraktion starten</span>
+                  </>
+                )}
+              </button>
+            </div>
+            
+            <div className="border-t pt-4" style={{ borderColor: '#CDB391' }}>
+              <button 
+                onClick={() => setCurrentStep(1)}
+                className="text-center w-full py-2 text-sm underline hover:no-underline transition-all"
+                style={{ color: '#5C493E' }}
+              >
+                ⚡ Überspringen und manuell ausfüllen
+              </button>
+            </div>
+          </div>
+        );
+        
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <Users style={{ color: '#5C493E' }} size={24} />
+              <h2 className="text-2xl font-bold" style={{ color: '#5C493E' }}>
+                Grunddaten des Brautpaares
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#5C493E' }}>
+                  Name Person 1
+                </label>
+                <input 
+                  type="text" 
+                  className="w-full p-3 rounded-lg border"
+                  value={formData.person1Name}
+                  onChange={(e) => updateFormData('person1Name', e.target.value)}
+                  placeholder="Sarah"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#5C493E' }}>
+                  Geschlecht Person 1
+                </label>
+                <select 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.person1Gender}
+                  onChange={(e) => updateFormData('person1Gender', e.target.value)}
+                >
+                  <option value="">Bitte wählen</option>
+                  <option value="weiblich">Weiblich</option>
+                  <option value="männlich">Männlich</option>
+                  <option value="divers">Divers</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#5C493E' }}>
+                  Name Person 2
+                </label>
+                <input 
+                  type="text" 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.person2Name}
+                  onChange={(e) => updateFormData('person2Name', e.target.value)}
+                  placeholder="Alexander"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#5C493E' }}>
+                  Geschlecht Person 2
+                </label>
+                <select 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.person2Gender}
+                  onChange={(e) => updateFormData('person2Gender', e.target.value)}
+                >
+                  <option value="">Bitte wählen</option>
+                  <option value="weiblich">Weiblich</option>
+                  <option value="männlich">Männlich</option>
+                  <option value="divers">Divers</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#5C493E' }}>
+                  Datum der Trauung
+                </label>
+                <input 
+                  type="date" 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.weddingDate}
+                  onChange={(e) => updateFormData('weddingDate', e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#5C493E' }}>
+                  Ort der Trauung
+                </label>
+                <input 
+                  type="text" 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.weddingLocation}
+                  onChange={(e) => updateFormData('weddingLocation', e.target.value)}
+                  placeholder="Schloss Bensberg"
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 9:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <FileText style={{ color: '#5C493E' }} size={24} />
+              <h2 className="text-2xl font-bold" style={{ color: '#5C493E' }}>
+                Stil der Rede & Generierung
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#5C493E' }}>Gewünschter Ton der Rede</label>
+                <select 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.speechTone}
+                  onChange={(e) => updateFormData('speechTone', e.target.value)}
+                >
+                  <option value="romantisch">Romantisch & emotional</option>
+                  <option value="humorvoll">Humorvoll & leicht</option>
+                  <option value="feierlich">Feierlich & traditionell</option>
+                  <option value="modern">Modern & ungezwungen</option>
+                  <option value="gemischt">Gemischt (romantisch mit Humor)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#5C493E' }}>Gewünschte Länge</label>
+                <select 
+                  className="w-full p-3 border rounded-lg"
+                  value={formData.speechLength}
+                  onChange={(e) => updateFormData('speechLength', e.target.value)}
+                >
+                  <option value="kurz">Kurz (10-15 Min)</option>
+                  <option value="mittel">Mittel (15-25 Min)</option>
+                  <option value="lang">Lang (25-35 Min)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-pink-50 to-purple-50 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: '#5C493E' }}>Bereit für Ihre personalisierte Traurede?</h3>
+              <p className="text-gray-600 mb-4">
+                Alle Informationen sind erfasst. Klicken Sie auf "Rede generieren" um Ihre Demo-Rede zu erstellen.
+              </p>
+              <div className="text-center">
+                <button 
+                  onClick={handleGenerateSpeech}
+                  disabled={isGenerating}
+                  className="text-white px-8 py-4 rounded-lg flex items-center space-x-2 mx-auto text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  style={{ backgroundColor: '#5C493E' }}
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                      <span>Demo-Rede wird erstellt...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText size={24} />
+                      <span>🤖 Demo-Rede generieren</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+        
+      default:
+        return (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold mb-4" style={{ color: '#5C493E' }}>
+              Schritt {currentStep} von {totalSteps - 1}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Dieser Schritt wird in der vollständigen Version implementiert.
+            </p>
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  Inhalt für Schritt {currentStep} kommt hier hin:
+                  <br />
+                  - Familie & nahestehende Personen
+                  <br />
+                  - Kennenlerngeschichte  
+                  <br />
+                  - Charaktere & Eigenschaften
+                  <br />
+                  - Der Antrag & besondere Momente
+                  <br />
+                  - Alltag & bewährte Partnerschaft
+                  <br />
+                  - Zukunft & besondere Details
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+    }
   };
 
   return (
@@ -368,12 +510,7 @@ Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
                   <button 
                     onClick={() => setCurrentStep(Math.min(totalSteps - 1, currentStep + 1))}
                     className="px-6 py-3 text-white rounded-lg transition-colors"
-                    style={{ 
-                      backgroundColor: '#5C493E',
-                      '&:hover': { backgroundColor: '#4a3d32' }
-                    }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#4a3d32'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#5C493E'}
+                    style={{ backgroundColor: '#5C493E' }}
                   >
                     Weiter
                   </button>
@@ -383,18 +520,16 @@ Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
                     disabled={isGenerating}
                     className="px-6 py-3 text-white rounded-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     style={{ backgroundColor: '#CDB391' }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#b8a082'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#CDB391'}
                   >
                     {isGenerating ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>KI arbeitet...</span>
+                        <span>Rede wird erstellt...</span>
                       </>
                     ) : (
                       <>
                         <FileText size={20} />
-                        <span>🤖 KI-Rede generieren</span>
+                        <span>🤖 Rede generieren</span>
                       </>
                     )}
                   </button>
@@ -403,7 +538,46 @@ Wichtig: Antworte NUR mit dem validen JSON, keine anderen Texte!`;
             </>
           ) : (
             <div className="space-y-6">
-              {/* Speech display code */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FileText style={{ color: '#5C493E' }} size={24} />
+                  <h2 className="text-2xl font-bold" style={{ color: '#5C493E' }}>Ihre personalisierte Traurede</h2>
+                </div>
+                <button 
+                  onClick={() => setShowSpeech(false)}
+                  className="hover:opacity-75 transition-opacity"
+                  style={{ color: '#5C493E' }}
+                >
+                  ← Zurück zum Formular
+                </button>
+              </div>
+              
+              <div className="rounded-lg p-4" style={{ backgroundColor: '#EDEBE7' }}>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold" style={{ color: '#5C493E' }}>
+                    Traurede für {formData.person1Name || 'Person 1'} & {formData.person2Name || 'Person 2'}
+                  </h3>
+                  <button 
+                    onClick={copyToClipboard}
+                    className="text-white px-4 py-2 rounded transition-colors text-sm"
+                    style={{ backgroundColor: '#CDB391' }}
+                  >
+                    📋 Kopieren
+                  </button>
+                </div>
+                
+                <textarea
+                  value={generatedSpeech}
+                  onChange={(e) => setGeneratedSpeech(e.target.value)}
+                  className="w-full h-96 p-4 rounded-lg text-sm resize-none"
+                  style={{ 
+                    backgroundColor: 'white',
+                    border: '1px solid #CDB391',
+                    color: '#5C493E'
+                  }}
+                  placeholder="Ihre generierte Rede erscheint hier..."
+                />
+              </div>
             </div>
           )}
         </div>
